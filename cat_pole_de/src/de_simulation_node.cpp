@@ -27,6 +27,11 @@ DeSimulationNode::DeSimulationNode(const rclcpp::NodeOptions & options)
     this->declare_parameter("initial_conditions.ddposition", 0.0);
     this->declare_parameter("initial_conditions.ddtheta", 0.0);
 
+    this->declare_parameter("initial_conditions.tau1", 0.0);
+    this->declare_parameter("initial_conditions.tau2", 0.0);
+
+    this->declare_parameter("initial_conditions.simulation_dt", 0.0);
+
     position_ = this->get_parameter("initial_conditions.position").as_double();
     theta_ = this->get_parameter("initial_conditions.theta").as_double();
 
@@ -94,9 +99,9 @@ DeSimulationNode::DeSimulationNode(const rclcpp::NodeOptions & options)
 
     // Function to compute accelerations (q_ddot)
     Eigen::Vector2d DeSimulationNode::compute_acceleration(const Eigen::Vector2d &q, const Eigen::Vector2d &q_dot, double force) {
-        double x = q(0);
+        //double x = q(0);
         double theta = q(1);
-        double x_dot = q_dot(0);
+        //double x_dot = q_dot(0);
         double theta_dot = q_dot(1);
 
         // Compute matrices
@@ -143,9 +148,12 @@ DeSimulationNode::DeSimulationNode(const rclcpp::NodeOptions & options)
         publish(q_ddot);
 
         // Increment time
-        current_time_ += dt;
+        current_time_ += dt_;
 
     }
+    
+} // namespace furuta_pendulum_de
 
-
-}
+// Register the component with class_loader
+#include <rclcpp_components/register_node_macro.hpp>
+RCLCPP_COMPONENTS_REGISTER_NODE(cart_pole_de::DeSimulationNode)

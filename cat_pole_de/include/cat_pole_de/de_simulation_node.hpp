@@ -65,9 +65,6 @@ private:
   //void simulate
   void simulate(void);
 
-
-
-
 };
 
 }
