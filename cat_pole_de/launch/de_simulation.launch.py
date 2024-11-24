@@ -35,7 +35,7 @@ def generate_launch_description():
                 [
                     FindPackageShare("cart_pole_description"),
                     "launch",
-                    "cart_pole.launch.py",
+                    "description.launch.py",
                 ]
             )
         ),

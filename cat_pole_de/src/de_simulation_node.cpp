@@ -35,8 +35,20 @@ DeSimulationNode::DeSimulationNode(const rclcpp::NodeOptions & options)
     position_ = this->get_parameter("initial_conditions.position").as_double();
     theta_ = this->get_parameter("initial_conditions.theta").as_double();
 
+    q_(0) = (double)position_;
+    q_(1) = (double)theta_;
+
+    RCLCPP_INFO(this->get_logger(), "x: %f", q_(0));
+    RCLCPP_INFO(this->get_logger(), "theta: %f", q_(1));
+
     dposition_ = this->get_parameter("initial_conditions.dposition").as_double();
     dtheta_ = this->get_parameter("initial_conditions.dtheta").as_double();
+
+    q_dot_(0) = (double)dposition_;
+    q_dot_(1) = (double)dtheta_;
+
+    RCLCPP_INFO(this->get_logger(), "velocity: %f", q_dot_(0));
+    RCLCPP_INFO(this->get_logger(), "angular velocity: %f",  q_dot_(1));
 
     ddposition_ = this->get_parameter("initial_conditions.ddposition").as_double();
     ddtheta_ = this->get_parameter("initial_conditions.ddtheta").as_double();
@@ -54,6 +66,9 @@ DeSimulationNode::DeSimulationNode(const rclcpp::NodeOptions & options)
 
     try {
         dt_ = this->get_parameter("simulation_dt").as_double();
+        
+        RCLCPP_INFO(this->get_logger(), "time step: %f", dt_);
+
         max_torque_ = this->get_parameter("max_torque").as_double();
         max_velocity_slider_1_ = this->get_parameter("max_velocity_slider_1").as_double();
         max_velocity_continuous_revolute_1_ = this->get_parameter("max_velocity_continuous_revolute_1").as_double();
@@ -126,13 +141,27 @@ DeSimulationNode::DeSimulationNode(const rclcpp::NodeOptions & options)
         joint_state_msg.header.stamp.sec = current_time_;
         joint_state_msg.header.stamp.nanosec = (current_time_ - (int)current_time_) * 1000000000.0;
 
-        
+        if(q_(0) > 0.84)
+        {
+        joint_state_msg.name.push_back("slider 1");
+        joint_state_msg.position.push_back(0.84);
+        joint_state_msg.velocity.push_back(0.0);
+        }
+        else if(q_(0) < -0.84)
+        {
+        joint_state_msg.name.push_back("slider 1");
+        joint_state_msg.position.push_back(-0.84);
+        joint_state_msg.velocity.push_back(0.0);
+        }
+        else 
+        {
         joint_state_msg.name.push_back("slider 1");
         joint_state_msg.position.push_back(q_(0));
         joint_state_msg.velocity.push_back(q_dot_(0));
+        }
 
         joint_state_msg.name.push_back("continuous_revolute 1");
-        joint_state_msg.position.push_back(q_(1));
+        joint_state_msg.position.push_back(q_(1)-3.141595);
         joint_state_msg.velocity.push_back(q_dot_(1));
 
         //print theta

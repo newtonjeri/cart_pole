@@ -1,13 +1,13 @@
 /**:
   ros__parameters:
-    simulation_dt: 0.002
+    simulation_dt: 0.02
     max_torque: 0.43
     max_velocity_slider_1: 100.0
     max_velocity_continuous_revolute_1: 100.0
 
     initial_conditions:
       position: 0.0
-      theta: 0.0
+      theta: 2.641595
 
       dposition: 0.0
       dtheta: 0.0
