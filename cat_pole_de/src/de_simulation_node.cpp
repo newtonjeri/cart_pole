@@ -141,6 +141,7 @@ DeSimulationNode::DeSimulationNode(const rclcpp::NodeOptions & options)
         joint_state_msg.header.stamp.sec = current_time_;
         joint_state_msg.header.stamp.nanosec = (current_time_ - (int)current_time_) * 1000000000.0;
 
+/*
         if(q_(0) > 0.84)
         {
         joint_state_msg.name.push_back("slider 1");
@@ -154,10 +155,11 @@ DeSimulationNode::DeSimulationNode(const rclcpp::NodeOptions & options)
         joint_state_msg.velocity.push_back(0.0);
         }
         else 
+*/
         {
         joint_state_msg.name.push_back("slider 1");
-        joint_state_msg.position.push_back(q_(0));
-        joint_state_msg.velocity.push_back(q_dot_(0));
+        joint_state_msg.position.push_back(q_(0)/100);
+        joint_state_msg.velocity.push_back(q_dot_(0)/100);
         }
 
         joint_state_msg.name.push_back("continuous_revolute 1");

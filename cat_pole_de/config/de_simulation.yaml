@@ -1,6 +1,6 @@
 /**:
   ros__parameters:
-    simulation_dt: 0.02
+    simulation_dt: 0.1
     max_torque: 0.43
     max_velocity_slider_1: 100.0
     max_velocity_continuous_revolute_1: 100.0
