@@ -28,6 +28,7 @@ install(
     rviz
     launch
     cart_pole
+    config
   DESTINATION
     share/${PROJECT_NAME}/
 )
