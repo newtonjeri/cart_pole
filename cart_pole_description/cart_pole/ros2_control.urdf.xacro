@@ -4,7 +4,7 @@
 
     <ros2_control name="gazebo_control" type="system">
         <hardware>
-            <plugin>fake_components/GenericSystem</plugin>
+            <plugin>gazebo_ros2_control/GazeboSystem</plugin>
         </hardware>
 
         <joint name="slider_1">
@@ -28,7 +28,7 @@
         <plugin filename="libgazebo_ros2_control.so" name="gazebo_ros2_control">
            <robot_param>robot_description</robot_param>
            <robot_param_node>robot_state_publisher</robot_param_node>
-           <parameters>$(find cart_pole_description)/config/effort_controller.yaml</parameters>
+           <parameters>$(find cart_pole_description)/config/effort_control.yaml</parameters>
         </plugin>
     </gazebo>
 
