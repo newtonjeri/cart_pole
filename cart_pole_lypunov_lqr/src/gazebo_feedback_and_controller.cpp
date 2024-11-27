@@ -3,12 +3,20 @@
 #include <memory>
 #include <string>
 #include <Eigen/Dense>
+#include <stdio.h>
 #include <cmath>
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/joint_state.hpp"
 #include "std_msgs/msg/float64_multi_array.hpp"
-using std::placeholders::_1;
 
+#define PI 3.14159
+
+// ANSI escape codes for colors
+#define GREEN_TEXT "\033[0;32m"
+#define BLUE_TEXT "\033[0;34m"
+#define RESET_COLOR "\033[0m"
+
+using std::placeholders::_1;
 using namespace std::chrono_literals;
 
 class JointStateSubscriber : public rclcpp::Node
@@ -65,9 +73,27 @@ class JointStateSubscriber : public rclcpp::Node
             RCLCPP_WARN(this->get_logger(), "Swinger joint not found in the message.");
         }
 
+        double f;
+
         if((slider_it != msg.name.end()) || (swinger_it != msg.name.end()))
         {
+              // Define the range boundaries
+              double lower_limit = PI - 0.523599;
+              double upper_limit = PI + 0.523599;
 
+                  // Normalize swinger_position to [0, 2*PI]
+              double normalized_position = fmod(swinger_position, 2 * PI);
+
+                  // If the normalized position is negative, adjust it by adding 2*PI
+              if (normalized_position < 0) {
+                  normalized_position += 2 * PI;
+              }
+                  
+         //RCLCPP_INFO(this->get_logger(), "normalised_position: %.4f", normalized_position);
+
+         //Before the pendulum is in the homoclinic orbit
+        if( normalized_position < lower_limit || normalized_position > upper_limit)
+        {
                   // Define system parameters
             double M = 2.7582989593438584919;  // Mass of cart (kg)
             double m = 0.96730709424135585817;  // Mass of pendulum (kg)
@@ -130,12 +156,27 @@ class JointStateSubscriber : public rclcpp::Node
     double denominator = kv + (M + m * sin(theta) * sin(theta)) * ke * E;
 
     // Control input
-    double f = numerator / denominator;
-    RCLCPP_INFO(this->get_logger(), "Force: %.4f Numerator: %.4f Denominator: %.4f Energy: %.4f", f, numerator, denominator, E);
+    f = numerator / denominator;
+    f = 10000*f;
+    RCLCPP_INFO(this->get_logger(), BLUE_TEXT"F: %.4f", f);
     //RCLCPP_INFO(this->get_logger(), "Force: %.4f Numerator: %.4f Denominator: %.4f Energy: %.4f", f, numerator, denominator, E);
+    }
+
+    else 
+    {
+       double gains_[4] = { -141.4214, -77.6558, -238.7684, -36.5906};
+
+       double from_output = (gains_[0]*swinger_position);
+       double first = (gains_[1]*swinger_velocity) + (gains_[2]*slider_position) +(gains_[3]*slider_velocity);
+
+       double final_gain = (from_output - first);
+       f = 100*final_gain;
+       RCLCPP_INFO(this->get_logger(), GREEN_TEXT"F: %.4f", f);
+
+    }
 
     auto message = std_msgs::msg::Float64MultiArray();
-    message.data.push_back(f*10000);
+    message.data.push_back(f);
     publisher_->publish(message);
         }
     }
