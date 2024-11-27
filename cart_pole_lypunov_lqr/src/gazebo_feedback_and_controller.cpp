@@ -101,11 +101,13 @@ class JointStateSubscriber : public rclcpp::Node
     
 
     // Control parameters
-    
+    /*--------------------------------------------------------------------------------*/
+    //THIS SHOULD BE ADDED TO A YAML FILE
     double ke = 10.0;
     double kv = 100.0;
     double kx = 100.0;
     double kdelta = 0.01;
+     /*-------------------------------------------------------------------------------*/
 
     // Forming z
     double z3 = cos(theta);
