@@ -7,6 +7,8 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(sensor_msgs REQUIRED)
 # uncomment the following section in order to fill in
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
@@ -22,5 +24,12 @@ if(BUILD_TESTING)
   set(ament_cmake_cpplint_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
 endif()
+
+add_executable(controller src/gazebo_feedback_and_controller.cpp)
+ament_target_dependencies(controller  rclcpp sensor_msgs)
+
+install(TARGETS
+  controller 
+  DESTINATION lib/${PROJECT_NAME})
 
 ament_package()
