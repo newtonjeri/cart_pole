@@ -7,6 +7,7 @@ export GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:/home/kevo/ros_ws/src/arduinobot_ws/
 export GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:/home/kevo/ros_ws/src/ai_based_sorting_robot_arm/src
 export GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:/home/kevo/robotics_inc/under_actuated_ststems/cart_pole_ws/src/cart_pole
 ```
+![CART POLE GAZEBO IMAGE](/extra_resource/Screenshot%202024-11-27%20173413.png)
 
 ## HOW TO RUN THE PROJECT.
 1. Go to the workspace and source the project;
