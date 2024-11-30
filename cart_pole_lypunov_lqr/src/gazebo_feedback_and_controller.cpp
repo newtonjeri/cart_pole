@@ -28,9 +28,40 @@ class JointStateSubscriber : public rclcpp::Node
       subscription_ = this->create_subscription<sensor_msgs::msg::JointState>("joint_states", 10, std::bind(&JointStateSubscriber::topic_callback, this, _1));
       publisher_ = this->create_publisher<std_msgs::msg::Float64MultiArray>("effort_controller/commands", 10);
 
+            this->declare_parameter("K", rclcpp::PARAMETER_DOUBLE_ARRAY);
+            this->declare_parameter("ke", rclcpp::PARAMETER_DOUBLE);
+            this->declare_parameter("kv", rclcpp::PARAMETER_DOUBLE);
+            this->declare_parameter("kx", rclcpp::PARAMETER_DOUBLE);
+            this->declare_parameter("kdelta", rclcpp::PARAMETER_DOUBLE);
+            this->declare_parameter("lqr_transition_angle", rclcpp::PARAMETER_DOUBLE);
+
+                        
+            try {
+                K_ = Eigen::Vector4d(this->get_parameter("K").as_double_array().data());
+                ke_ = this->get_parameter("ke").as_double();
+                kv_ = this->get_parameter("kv").as_double();
+                kx_ = this->get_parameter("kx").as_double();
+                kdelta_ = this->get_parameter("kdelta").as_double();
+                lqr_transition_angle_ = this->get_parameter("lqr_transition_angle").as_double();
+
+                
+            RCLCPP_WARN(this->get_logger(), "K: %.4f, %.4f, %.4f, %.4f", K_(0), K_(1), K_(2), K_(3));
+            RCLCPP_WARN(this->get_logger(), "ke: %.4f", ke_);
+            RCLCPP_WARN(this->get_logger(), "kv: %.4f", kv_);
+            RCLCPP_WARN(this->get_logger(), "kx: %.4f", kx_);
+            RCLCPP_WARN(this->get_logger(), "kdelta: %.4f", kdelta_);
+            RCLCPP_WARN(this->get_logger(), "lqr_transition_angle_: %.4f", lqr_transition_angle_);
+
+            } catch (const rclcpp::exceptions::ParameterUninitializedException & e) {
+                RCLCPP_ERROR_STREAM(this->get_logger(), "Required parameter not defined: " << e.what());
+                throw e;
+            }
+
     }
 
   private:
+
+
     void topic_callback(const sensor_msgs::msg::JointState & msg)
     {
         // Find the indices of the "slider" and "swinger" joints
@@ -44,6 +75,8 @@ class JointStateSubscriber : public rclcpp::Node
             
             double swinger_position;
             double swinger_velocity;
+
+            double switching_range = lqr_transition_angle_;
 
 
         if (slider_it != msg.name.end())
@@ -78,8 +111,8 @@ class JointStateSubscriber : public rclcpp::Node
         if((slider_it != msg.name.end()) || (swinger_it != msg.name.end()))
         {
               // Define the range boundaries
-              double lower_limit = PI - 0.523599;
-              double upper_limit = PI + 0.523599;
+              double lower_limit = PI - switching_range;
+              double upper_limit = PI + switching_range;
 
                   // Normalize swinger_position to [0, 2*PI]
               double normalized_position = fmod(swinger_position, 2 * PI);
@@ -129,10 +162,10 @@ class JointStateSubscriber : public rclcpp::Node
     // Control parameters
     /*--------------------------------------------------------------------------------*/
     //THIS SHOULD BE ADDED TO A YAML FILE
-    double ke = 10.0;
-    double kv = 100.0;
-    double kx = 100.0;
-    double kdelta = 0.01;
+    double ke = ke_;  // reduce this since it is on the denominator
+    double kv = kv_; //leave this constant since it is both in numerator and denominator
+    double kx = kx_; //increase to make more aggressive since it is on the numerator
+    double kdelta = kdelta_; //increase since it is at the numerator
      /*-------------------------------------------------------------------------------*/
 
     // Forming z
@@ -157,20 +190,19 @@ class JointStateSubscriber : public rclcpp::Node
 
     // Control input
     f = numerator / denominator;
-    f = 10000*f;
     RCLCPP_INFO(this->get_logger(), BLUE_TEXT"F: %.4f", f);
     //RCLCPP_INFO(this->get_logger(), "Force: %.4f Numerator: %.4f Denominator: %.4f Energy: %.4f", f, numerator, denominator, E);
     }
 
     else 
     {
-       double gains_[4] = { -141.4214, -77.6558, -238.7684, -36.5906};
+       double gains_[4] = { K_(0), K_(1), K_(2), K_(3)};
 
        double from_output = (gains_[0]*swinger_position);
        double first = (gains_[1]*swinger_velocity) + (gains_[2]*slider_position) +(gains_[3]*slider_velocity);
 
        double final_gain = (from_output - first);
-       f = 100*final_gain;
+       f = final_gain;
        RCLCPP_INFO(this->get_logger(), GREEN_TEXT"F: %.4f", f);
 
     }
@@ -182,6 +214,13 @@ class JointStateSubscriber : public rclcpp::Node
     }
     rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr subscription_;
     rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr publisher_; // effort controller publisher
+    Eigen::Vector4d K_;
+    double ke_;
+    double kv_;
+    double kx_;
+    double kdelta_;
+    double lqr_transition_angle_;
+
 };
 
 int main(int argc, char * argv[])

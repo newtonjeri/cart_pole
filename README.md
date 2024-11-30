@@ -14,10 +14,27 @@ source install/setup.bash
 ros2 launch cart_pole_description gazebo_complete.launch.xml
 ```
 
-3. The run the controller:
+3. The run the controller on another bash:
 
 ```bash
-ros2 run cart_pole_lypunov_lqr controller
+colcon build --symlink-install
+ros2 launch cart_pole_lypunov_lqr lqr_swinger.launch.py
+```
+The symlink install allows for changing the gain parameters in the yaml file and them taking effect in real time:
+
+```yaml
+/**:
+  ros__parameters:
+    K: [ -141.4214, -77.6558, -238.7684, -36.5906]  #gains for the LQR
+
+    ke: 0.0001      #<- <- 
+    kv: 1.0         # ||
+    kx: 1000.0      #-> ->
+    kdelta: 0.0001  # <- <-
+
+    # 0.0 angle - upward position. When absolute angle is less than this threshold
+    # transition from swing up to LQR
+    lqr_transition_angle: 0.523599
 ```
 
 4. I can also have the following plotter:
