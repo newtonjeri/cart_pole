@@ -46,4 +46,4 @@ sudo apt install ros-humble-gazebo-ros2-control
 ```
 
 
-TODO: I might add an initializer where I have a force to one direction at first to have a large initial oscillation before starting the project or, I might just start at an angle to save startup time.
+TODO: I might add an initializer where I have a force to one direction at first to have a large initial oscillation before starting the project or, I might just start at an angle to save time.
