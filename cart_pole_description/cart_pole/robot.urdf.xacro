@@ -126,7 +126,7 @@
 </inertial>
 </link>
 
-<joint name="continuous_revolute 1" type="continuous">
+<joint name="continuous_revolute_1" type="continuous">
 <origin xyz="0.035000000000000003331 0.024999999999999966693 0" rpy="-0 -1.570796326794896336 0" />
 <parent link="cart_move" />
 <child link="cart_swinger" />
