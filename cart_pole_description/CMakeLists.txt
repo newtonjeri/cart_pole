@@ -29,6 +29,7 @@ install(
     launch
     cart_pole
     config
+    worlds
   DESTINATION
     share/${PROJECT_NAME}/
 )
