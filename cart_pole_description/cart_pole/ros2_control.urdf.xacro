@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-<ros2_control name="GazeboSimSystem" type="system">
+<ros2_control name="IgzSimSystem" type="system">
   <hardware>
-    <plugin>gazebo_ros2_control/GazeboSystem</plugin>
+    <plugin>ign_ros2_control/IgnitionSystem</plugin>
   </hardware>
   <joint name="slider_1">
     <command_interface name="effort">
@@ -27,10 +27,17 @@
   </joint>
 </ros2_control>
 
-  <gazebo>
+  <!-- <gazebo>
     <plugin filename="libgazebo_ros2_control.so" name="gazebo_ros2_control">
       <parameters>$(find cart_pole_description)/config/effort_control.yaml</parameters>
     </plugin>
-  </gazebo>
+  </gazebo> -->
+
+  <gazebo>
+    <plugin name="ign_ros2_control::IgnitionROS2ControlPlugin"
+        filename="ign_ros2_control-system">
+        <parameters>$(find cart_pole_description)/config/effort_control.yaml</parameters>
+    </plugin>
+</gazebo>
 
 </robot>
