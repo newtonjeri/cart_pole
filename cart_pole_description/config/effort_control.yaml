@@ -12,3 +12,4 @@ effort_controller:
   ros__parameters:
     joints:
       - slider_1
+      #- continuous_revolute_1

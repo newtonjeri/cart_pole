@@ -80,14 +80,26 @@ def generate_launch_description():
             "true",
             "-topic",
             "robot_description",
-            # "-x",
-            # "-1.0",
-            # "-y",
-            # "1.0",
-            # "-z",
-            # "0.2",
+             "-x",
+             "0.0",
+             "-y",
+             "0.0",
+             "-z",
+             "0.2",
         ],
         output="screen",
+    )
+
+    launch_everything = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            PathJoinSubstitution(
+                [
+                    get_package_share_directory("cart_pole_description"),
+                    "launch",
+                    "all.launch.py",
+                ]
+            )
+        )
     )
 
     return LaunchDescription(
@@ -99,5 +111,6 @@ def generate_launch_description():
             gz_sim,
             #gz_bridge,
             gz_spawn_entity,
+            launch_everything,
         ]
     )
