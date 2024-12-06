@@ -1,6 +1,6 @@
 /**:
   ros__parameters:
-    K: [ -141.4214, -77.6558, -238.7684, -36.5906]
+    K: [ -1.414214, -4.610230, -103.328731, -13.158521]
 
     ke: 0.0001
     kv: 1.0
@@ -11,11 +11,4 @@
     # transition from swing up to LQR
     lqr_transition_angle: 0.523599
     initial_force: 30.0
-   
-# K_ = Eigen::Vector4d(this->get_parameter("K").as_double_array().data());
-# ke_ = this->get_parameter("ke").as_double();
-# kv_ = this->get_parameter("kv").as_double();
-# kx_ = this->get_parameter("kx").as_double();
-# kdelta_ = this->get_parameter("kdelta").as_double();
-# lqr_transition_angle_ = this->get_parameter("lqr_transition_angle").as_double();
-# initial_force_
+    rviz_test: true
