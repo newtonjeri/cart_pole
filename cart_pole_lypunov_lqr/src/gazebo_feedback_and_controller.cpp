@@ -252,7 +252,7 @@ private:
                 }
                 else if ((normalized_position < convert_to_rads(-30))) // IF IT TURNS VELOCITY MID LQR
                 {
-                    double error = M_PI * 2 - swinger_position;
+                    double error = swinger_position;
                     torque = calculate_LQR_torque_output(slider_position, slider_velocity, swinger_position, swinger_velocity, error);
                     RCLCPP_INFO(this->get_logger(), BRIGHT_MAGENTA_TEXT "LEAVE (30 TO -30) E:-> %.4f, P: -> %.4f, V: -> %.4f T: -> %.4f", error, convert_to_degrees(swinger_position), convert_to_degrees(swinger_velocity), torque);
                 }
