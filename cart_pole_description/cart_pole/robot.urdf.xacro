@@ -131,7 +131,7 @@
 <parent link="cart_move" />
 <child link="cart_swinger" />
 <axis xyz="0 0 1"/>
-<limit effort="1" velocity="20" />
+<limit effort="1" velocity="30" />
 <joint_properties friction="0.0"/>
 </joint>
 
@@ -140,7 +140,7 @@
 <parent link="cart_pole" />
 <child link="cart_move" />
 <axis xyz="0 0 1"/>
-<limit effort="1" velocity="20" lower="-0.8499999999999999778" upper="0.8499999999999999778"/>
+<limit effort="500" velocity="30" lower="-0.8499999999999999778" upper="0.8499999999999999778"/>
 <joint_properties friction="0.0"/>
 </joint>
 

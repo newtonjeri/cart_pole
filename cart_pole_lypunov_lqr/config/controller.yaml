@@ -1,14 +1,14 @@
 /**:
   ros__parameters:
-    K: [ -1.414214, -4.610230, -103.328731, -13.158521]
+    K: [-1.000000, -4.931363, -400.924669, -18.778934]
 
     ke: 0.001
     kv: 1.0
-    kx: 1000.0
-    kdelta: 0.0001
+    kx: 10.0
+    kdelta: 100.0
 
     # 0.0 angle - upward position. When absolute angle is less than this threshold
     # transition from swing up to LQR
-    lqr_transition_angle: 0.523599
-    initial_force: 30.0
+    lqr_transition_angle: 30.0 #new requirement to use units I can easily visualise
+    initial_force: 50.0
     rviz_test: false

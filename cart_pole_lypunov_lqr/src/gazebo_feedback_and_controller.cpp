@@ -87,7 +87,7 @@ public:
             kv_ = this->get_parameter("kv").as_double();
             kx_ = this->get_parameter("kx").as_double();
             kdelta_ = this->get_parameter("kdelta").as_double();
-            lqr_transition_angle_ = this->get_parameter("lqr_transition_angle").as_double();
+            lqr_transition_angle_ = convert_to_rads(this->get_parameter("lqr_transition_angle").as_double());
             initial_force_ = this->get_parameter("initial_force").as_double();
             rviz_test = this->get_parameter("rviz_test").as_bool();
 
@@ -96,7 +96,7 @@ public:
             RCLCPP_WARN(this->get_logger(), "kv: %.4f", kv_);
             RCLCPP_WARN(this->get_logger(), "kx: %.4f", kx_);
             RCLCPP_WARN(this->get_logger(), "kdelta: %.4f", kdelta_);
-            RCLCPP_WARN(this->get_logger(), "lqr_transition_angle_: %.4f", lqr_transition_angle_);
+            RCLCPP_WARN(this->get_logger(), "lqr_transition_angle_: %.4f", convert_to_degrees(lqr_transition_angle_));
             RCLCPP_WARN(this->get_logger(), "initial_force_ : %.4f", initial_force_);
             if (rviz_test)
             {
@@ -168,105 +168,42 @@ private:
             RCLCPP_WARN(this->get_logger(), "Swinger joint not found in the message.");
         }
 
+        double torque;
+
         if ((slider_it != msg.name.end()) || (swinger_it != msg.name.end()))
         {
+            double converted_swinger_angle = change_angle_origin(swinger_position);
+            double normalize_swinger_angle = normalize_to_pi(converted_swinger_angle); // this is to be used only for the LQR, otherwise use the above
+            double converted_swinger_velocity = swinger_velocity;                      // increases velocity anti_clokwise
 
-            // Normalize swinger_position to [ -PI, PI]
-            swinger_position = swinger_position + PI;
-            double normalized_position = normalize_to_pi(swinger_position);
-            double torque;
+            double converted_slider_position = -1 * slider_position; // the direction to the right is what is positive
+            double converted_slider_velocity = -1 * slider_velocity; // thus the velocity should also be inverted
 
-            // USE VELOCITY TO CHECK THE DIRECTION WE ARE ENTERING FROM
-            if (swinger_velocity < 0.0) // anti-clockwise direction
+            // RCLCPP_WARN(this->get_logger(), BRIGHT_GREEN_TEXT "Swinger -> %.4f slider1 -> %.4f vel1 -> %.4f vel2 -> %.4f", convert_to_degrees(converted_swinger_angle), converted_slider_position, convert_to_degrees(converted_swinger_velocity), converted_slider_velocity);
+
+            // choosing a great transition angle
+            double top_position = convert_to_rads(0);                  // the top is zero
+            double lower_limit = top_position - lqr_transition_angle_; //-30
+            double upper_limit = top_position + lqr_transition_angle_; // 30
+
+            if (((normalize_swinger_angle) > (lower_limit)) && ((normalize_swinger_angle) < (upper_limit))) /// greater than -30 less than 30
             {
-                // RCLCPP_INFO(this->get_logger(), "anti_clockwise");
-                RCLCPP_INFO(this->get_logger(), BLUE_TEXT "CLOCKWISE -> P: %.4f, V: %.4f, N: %.4f", convert_to_degrees(swinger_position), convert_to_degrees(swinger_velocity), convert_to_degrees(normalized_position));
-
-                if ((normalized_position > convert_to_rads(30)) && (normalized_position < convert_to_rads(180.0))) // IT IS IN TH RANGE (-180 TO -30) RUN THE CONTROLLER TO BRING IT TO THE HOMICLINIC ORBIT.
-                {
-                    RCLCPP_INFO(this->get_logger(), YELLOW_TEXT "(180 TO 30)");
-                    torque = calculate_controller_force_output(slider_position, slider_velocity, swinger_position, swinger_velocity);
-                }
-                else if ((normalized_position < convert_to_rads(30)) && (normalized_position > convert_to_rads(-30))) // IT IS IN THE RANGE (-30 TO 30) THEN RUN THE LQR TO MAINTAIN IT TO THE HOMICLINIC ORBIT
-                {
-                    double error = swinger_position;
-                    bool greater = false;
-                    if (swinger_position > M_PI)
-                    {
-                        error = M_PI * 2 - swinger_position;
-                        RCLCPP_INFO(this->get_logger(), BRIGHT_MAGENTA_TEXT "GREATER");
-                        greater = true;
-                    }
-                    torque = calculate_LQR_torque_output(slider_position, slider_velocity, swinger_position, swinger_velocity, error);
-                    if (greater)
-                    {
-                        RCLCPP_INFO(this->get_logger(), BRIGHT_MAGENTA_TEXT "torque: %.4f", torque);
-                        torque = -1 * torque;
-                        RCLCPP_INFO(this->get_logger(), BRIGHT_MAGENTA_TEXT "torque: %.4f", torque);
-                        greater = false;
-                    }
-                    RCLCPP_INFO(this->get_logger(), BRIGHT_MAGENTA_TEXT "ENTER (30 TO -30) E:-> %.4f, P: -> %.4f, V: -> %.4f T: -> %.4f", error, convert_to_degrees(swinger_position), convert_to_degrees(swinger_velocity), torque);
-                }
-                else if ((normalized_position < convert_to_rads(30)) && (normalized_position > convert_to_rads(-30))) // IF IT TURNS VELOCITY MID LQR
-                {
-                    double error = swinger_position;
-                    torque = calculate_LQR_torque_output(slider_position, slider_velocity, swinger_position, swinger_velocity, error);
-                    RCLCPP_INFO(this->get_logger(), BRIGHT_MAGENTA_TEXT "LEAVE (30 TO -30) E:-> %.4f, P: -> %.4f, V: -> %.4f T: -> %.4f", error, convert_to_degrees(swinger_position), convert_to_degrees(swinger_velocity), torque);
-                }
-                else // HEADING BACK
-                {
-                    RCLCPP_INFO(this->get_logger(), GREEN_TEXT "HEADING BACK");
-                    torque = calculate_controller_force_output(slider_position, slider_velocity, swinger_position, swinger_velocity);
-                }
+                torque = calculate_LQR_torque_output(converted_slider_position, converted_slider_velocity, normalize_swinger_angle, converted_swinger_velocity); // I think I can just use this as a regulato and do not require the error term
+                RCLCPP_WARN(this->get_logger(), BRIGHT_MAGENTA_TEXT "Swinger -> %.4f slider1 -> %.4f vel1 -> %.4f vel2 -> %.4f T -> %.4f", convert_to_degrees(normalize_swinger_angle), converted_slider_position, convert_to_degrees(converted_swinger_velocity), converted_slider_velocity, torque);
             }
-            else if (swinger_velocity > 0.0) // anti-clockwise direction
+            else
             {
-                // RCLCPP_INFO(this->get_logger(), "anti-clockwise");
-                RCLCPP_INFO(this->get_logger(), RED_TEXT "ANTI-CLOCKWISE -> P: %.4f, V: %.4f, N: %.4f", convert_to_degrees(swinger_position), convert_to_degrees(swinger_velocity), convert_to_degrees(normalized_position));
-
-                if ((normalized_position < convert_to_rads(-30.0)) && (normalized_position > convert_to_rads(-180.0))) // IT IS IN TH RANGE (-180 TO -30) RUN THE CONTROLLER TO BRING IT TO THE HOMICLINIC ORBIT.
-                {
-                    RCLCPP_INFO(this->get_logger(), BRIGHT_YELLOW_TEXT "(-180 TO -30)");
-                    torque = calculate_controller_force_output(slider_position, slider_velocity, swinger_position, swinger_velocity);
-                }
-                else if ((normalized_position < convert_to_rads(30)) && (normalized_position > convert_to_rads(-30))) // IT IS IN THE RANGE (30 TO -30) THEN RUN THE LQR TO MAINTAIN IT TO THE HOMICLINIC ORBIT
-                {
-                    double error = M_PI * 2 - swinger_position;
-                    bool greater = false;
-                    RCLCPP_INFO(this->get_logger(), BRIGHT_MAGENTA_TEXT "E: %.4f, P: %.4f", error, swinger_position);
-                    if (error > M_PI)
-                    {
-                        error = swinger_position;
-                        greater = true;
-                        RCLCPP_INFO(this->get_logger(), BRIGHT_MAGENTA_TEXT "GREATER");
-                    }
-                    torque = calculate_LQR_torque_output(slider_position, slider_velocity, swinger_position, swinger_velocity, error);
-                    if (!greater)
-                    {
-                        RCLCPP_INFO(this->get_logger(), BRIGHT_MAGENTA_TEXT "torque: %.4f", torque);
-                        torque = -1 * torque;
-                        RCLCPP_INFO(this->get_logger(), BRIGHT_MAGENTA_TEXT "torque: %.4f", torque);
-                        greater = false;
-                    }
-                    RCLCPP_INFO(this->get_logger(), BRIGHT_MAGENTA_TEXT "ENTER (30 TO -30) E:-> %.4f, P: -> %.4f, V: -> %.4f T: -> %.4f", error, convert_to_degrees(swinger_position), convert_to_degrees(swinger_velocity), torque);
-                }
-                else if ((normalized_position < convert_to_rads(-30))) // IF IT TURNS VELOCITY MID LQR
-                {
-                    double error = swinger_position;
-                    torque = calculate_LQR_torque_output(slider_position, slider_velocity, swinger_position, swinger_velocity, error);
-                    RCLCPP_INFO(this->get_logger(), BRIGHT_MAGENTA_TEXT "LEAVE (30 TO -30) E:-> %.4f, P: -> %.4f, V: -> %.4f T: -> %.4f", error, convert_to_degrees(swinger_position), convert_to_degrees(swinger_velocity), torque);
-                }
-                else // HEADING BACK
-                {
-                    RCLCPP_INFO(this->get_logger(), BRIGHT_GREEN_TEXT "HEADING BACK");
-                    torque = calculate_controller_force_output(slider_position, slider_velocity, swinger_position, swinger_velocity);
-                }
+                torque = calculate_controller_force_output(converted_slider_position, converted_slider_velocity, converted_swinger_angle, converted_swinger_velocity);
+                torque = -1 * torque;
+                RCLCPP_WARN(this->get_logger(), BRIGHT_GREEN_TEXT "Swinger -> %.4f slider1 -> %.4f vel1 -> %.4f vel2 -> %.4f T -> %.4f", convert_to_degrees(converted_swinger_angle), converted_slider_position, convert_to_degrees(converted_swinger_velocity), converted_slider_velocity, torque);
             }
 
-            auto message = std_msgs::msg::Float64MultiArray();
-            message.data = {torque}; //{ torque, 0.0};
-            publisher_->publish(message);
+            // Also positive force will have to be inverted normalize the angle
         }
+
+        auto message = std_msgs::msg::Float64MultiArray();
+        message.data = {torque}; //{ torque, 0.0};
+        publisher_->publish(message);
     }
 
     void initialization(const sensor_msgs::msg::JointState &msg)
@@ -306,6 +243,10 @@ private:
             auto message = std_msgs::msg::Float64MultiArray();
             message.data = {initial_force_}; //{ 0.0, initial_force_};
             publisher_->publish(message);
+            if (rviz_test)
+            {
+                initialize_ = true;
+            }
         }
         else
         {
@@ -348,18 +289,15 @@ private:
      *
      * @return The torque output for the LQR controller (N*m).
      */
-    double calculate_LQR_torque_output(double slider_position, double slider_velocity, double swinger_position, double swinger_velocity, double error)
+    double calculate_LQR_torque_output(double slider_position, double slider_velocity, double swinger_position, double swinger_velocity)
     {
         double gains_[4] = {K_(0), K_(1), K_(2), K_(3)};
 
-        double error_gain = (gains_[2] * error);
+        double error_gain = (gains_[2] * swinger_position); // since the centre position is zero, it can be used as a regulator
         double other_gains = (gains_[0] * slider_position) + (gains_[1] * slider_velocity) + (gains_[3] * swinger_velocity);
-        if (rviz_test)
-        {
-            RCLCPP_INFO(this->get_logger(), BRIGHT_CYAN_TEXT "F: %.5f, O: %.5f, E: %.5f", error_gain, other_gains, error);
-        }
 
-        double final_gain = (error_gain - other_gains);
+        double final_gain = (error_gain + other_gains); //this has to be check out and thought throug, something is not going great.
+        RCLCPP_WARN(this->get_logger(), BRIGHT_MAGENTA_TEXT "K [ %.4f %.4f %.4f %.4f] IN [ %.4f %.4f %.4f %.4f] OUT [ %.4f %.4f %.4f]", gains_[0], gains_[1], gains_[2], gains_[3], slider_position, slider_velocity, swinger_position, swinger_velocity, error_gain, other_gains, final_gain);
         return final_gain;
     }
 
@@ -487,6 +425,16 @@ private:
     double convert_to_rads(double degrees)
     {
         return (degrees * M_PI / 180);
+    }
+
+    double change_angle_origin(double angle)
+    {
+        return (angle + convert_to_rads(180));
+    }
+
+    double change_slider_vector_direction(double position)
+    {
+        return (-1 * position);
     }
 
     rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr subscription_;
