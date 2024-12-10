@@ -91,7 +91,7 @@ public:
             initial_force_ = this->get_parameter("initial_force").as_double();
             rviz_test = this->get_parameter("rviz_test").as_bool();
 
-            RCLCPP_WARN(this->get_logger(), "K: %.4f, %.4f, %.4f, %.4f", K_(0), K_(1), K_(2), K_(3));
+            RCLCPP_WARN(this->get_logger(), "K: [%.4f, %.4f, %.4f, %.4f]", K_(0), K_(1), K_(2), K_(3));
             RCLCPP_WARN(this->get_logger(), "ke: %.4f", ke_);
             RCLCPP_WARN(this->get_logger(), "kv: %.4f", kv_);
             RCLCPP_WARN(this->get_logger(), "kx: %.4f", kx_);
