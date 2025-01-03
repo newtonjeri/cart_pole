@@ -1,9 +1,12 @@
+# Ignore documentation
 keys.sh
-.vscode/
 source.md
-cart_pole_observer/
-cart_pole_drake/
-cat_pole_de/
-documentation.md
+documentaion.md
 source.md
 TODO.md
+
+# Ignore files
+.vscode/
+cat_pole_de/
+cart_pole_observer/ 
+cart_pole_drake/
