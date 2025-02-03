@@ -38,6 +38,20 @@ install(TARGETS
   controller 
   DESTINATION lib/${PROJECT_NAME})
 
+  add_executable(rviz_viewer src/rviz_position_check.cpp)
+  ament_target_dependencies(rviz_viewer  rclcpp sensor_msgs Eigen3)
+  
+  install(TARGETS
+    rviz_viewer
+    DESTINATION lib/${PROJECT_NAME})
+
+    add_executable(force_vector_determoner src/effort_to_determine_direction.cpp)
+    ament_target_dependencies(force_vector_determoner  rclcpp sensor_msgs Eigen3)
+    
+    install(TARGETS
+      force_vector_determoner
+      DESTINATION lib/${PROJECT_NAME})
+
 
   install(DIRECTORY
   config
